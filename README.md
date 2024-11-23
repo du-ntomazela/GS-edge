@@ -16,7 +16,6 @@ https://wokwi.com/projects/414992047973644289
 ---
 
 ## Código Fonte C++​
-
 #include <WiFi.h>
 #include <PubSubClient.h>
 
