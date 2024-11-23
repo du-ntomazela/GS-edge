@@ -13,6 +13,9 @@ https://youtu.be/vNYo_T2LGao
 ## Link da simulação no WOWKI
 https://wokwi.com/projects/414992047973644289
 
+## Link do HIVEMQ
+https://www.hivemq.com/demos/websocket-client/
+Este é o tópico global-solutions/1
 
 ---
 
