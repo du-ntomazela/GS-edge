@@ -7,6 +7,104 @@ Os dados capturados são publicados em um broker MQTT para monitoramento remoto,
 
 ---
 
+## Link do vídeo 
+https://youtu.be/vNYo_T2LGao
+
+## Link da simulação no WOWKI
+https://wokwi.com/projects/414992047973644289
+
+---
+
+## Código Fonte C++​
+
+#include <WiFi.h>
+#include <PubSubClient.h>
+
+// Configurações de Wi-Fi
+const char* wifiRede = "Wokwi-GUEST";       // Nome da rede Wi-Fi
+const char* wifiSenha = "";                // Senha da rede Wi-Fi
+
+// Configuração do MQTT
+const char* servidorMQTT = "mqtt-dashboard.com"; // Endereço do broker MQTT
+const int portaMQTT = 1883;                      // Porta MQTT
+const char* topicoMQTT = "global-solutions/1";   // Tópico para publicar os dados
+
+WiFiClient wifiCliente;
+PubSubClient mqttCliente(wifiCliente);
+
+// Pinos
+const int pinoLED = 5;
+const int sensorUV = 11;
+
+void conectarWiFi() {
+  Serial.print("Conectando ao Wi-Fi");
+  WiFi.begin(wifiRede, wifiSenha);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nWi-Fi conectado!");
+}
+
+void conectarMQTT() {
+  while (!mqttCliente.connected()) {
+    Serial.print("Conectando ao broker MQTT...");
+    if (mqttCliente.connect("ESP32Cliente")) {
+      Serial.println("Conectado!");
+    } else {
+      Serial.print("Falha na conexão MQTT (rc=");
+      Serial.print(mqttCliente.state());
+      Serial.println("). Tentando novamente em 5 segundos.");
+      delay(5000);
+    }
+  }
+}
+
+void setup() {
+  pinMode(pinoLED, OUTPUT);
+  pinMode(sensorUV, INPUT);
+  Serial.begin(9600);
+
+  // Conecta ao Wi-Fi
+  conectarWiFi();
+
+  // Configura MQTT
+  mqttCliente.setServer(servidorMQTT, portaMQTT);
+  conectarMQTT();
+}
+
+void loop() {
+  if (!mqttCliente.connected()) {
+    conectarMQTT();
+  }
+  mqttCliente.loop();
+
+  // Leitura e cálculo do valor UV
+  int valorBruto = analogRead(sensorUV);
+  float indiceUV = map(valorBruto, 0, 4095, 0, 18);
+
+  // Define o status UV e controla o LED
+  const char* statusUV = (indiceUV < 2) ? "Baixo" :
+                         (indiceUV < 6) ? "Moderado" : "Alto";
+  digitalWrite(pinoLED, (indiceUV >= 6) ? HIGH : LOW);
+
+  // Cria uma mensagem formatada
+  char mensagem[100];
+  sprintf(mensagem, "Valor Bruto: %d, Índice UV: %.1f, Status: %s", valorBruto, indiceUV, statusUV);
+
+  // Publica os dados no broker MQTT
+  if (mqttCliente.publish(topicoMQTT, mensagem)) {
+    Serial.println("Mensagem publicada com sucesso:");
+    Serial.println(mensagem);
+  } else {
+    Serial.println("Falha ao publicar mensagem.");
+  }
+
+  delay(1000); // Aguarda 1 segundo antes da próxima leitura
+}
+
+---
+
 ## **Funcionalidades**
 - Simulação do índice UV utilizando um potenciômetro.
 - Publicação de dados no broker MQTT, incluindo:
